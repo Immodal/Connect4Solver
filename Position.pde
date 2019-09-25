@@ -52,17 +52,20 @@ class Position {
     final static int WIDTH = 7;
     final static int HEIGHT = 6;
 
+    // All longs being initialized with numbers must have an "L" at the end,
+    // or it will be interpreted as an int.
     // This tracks only the stones of the current player.
-    long current_position = 0;
+    long current_position = 0L;
     // This tracks all stones regardless of who it belongs to.
-    long mask = 0;
+    long mask = 0L;
 
     int moves = 0;
 
     // Returns true if a column is playable, else the column is full.
     boolean canPlay(int col) {
+        // Will not allow play once a winner has been found.
         // Only checks the top row because stones only ever stack on top of each other.
-        return (mask & top_mask(col)) == 0;
+        return getWinner()==0 ? (mask & top_mask(col)) == 0 : false;
     }
 
     void play(int col) {
@@ -73,6 +76,22 @@ class Position {
         // The OR then adds the latest 1 to the stored mask.
         mask |= mask + bottom_mask(col);
         moves++;
+    }
+    
+    // Returns number of the current player.
+    int getCurrentPlayer() {
+        return moves%2==0 ? 1 : 2;
+    }
+    
+    // Returns the player number of the winner, otherwise 0.
+    int getWinner() {
+        int player = getCurrentPlayer();
+        // The check is only possible after a turn has been taken.
+        if(hasAlignment(current_position^mask)) {
+             return player==2 ? 1 : 2;
+        } else {
+            return 0;
+        }
     }
 
     // Returns true if the current player has a 4 alignment
@@ -117,11 +136,101 @@ class Position {
 
     // Return a bitmask containing a single 1 on the top cell of a given column
     long top_mask(int col) {
-        return (1 << (HEIGHT - 1)) << col*(HEIGHT+1);
+        return (1L << (HEIGHT - 1)) << col*(HEIGHT+1);
     }
 
     // Return a bitmask containing a single 1 on the bottom cell of a given column
     long bottom_mask(int col) {
-        return 1 << col*(HEIGHT+1);
+        return 1L << col*(HEIGHT+1);
+    }
+    
+    String toPrintString() {
+        String pos1;
+        String pos2;
+        String result = "";
+        
+        // Strings must be reversed or it will be read from front to back
+        // instead of the intended back to front
+        if(moves%2==0) {
+            pos1 = new StringBuilder(Long.toBinaryString(current_position)).reverse().toString();
+            pos2 = new StringBuilder(Long.toBinaryString(current_position^mask)).reverse().toString();
+        } else {
+            pos1 = new StringBuilder(Long.toBinaryString(current_position^mask)).reverse().toString();
+            pos2 = new StringBuilder(Long.toBinaryString(current_position)).reverse().toString();
+        }
+        
+        int index;
+        for(int i=0; i<WIDTH; i++){
+            for(int j=0; j<HEIGHT+1; j++){
+                index = j+i*WIDTH;
+                // Skip row HEIGHT+1
+                if(j!=HEIGHT) {
+                    if(index<pos1.length() && pos1.charAt(index)=='1') {
+                        result += "1";
+                    } else if(index<pos2.length() && pos2.charAt(index)=='1') {
+                        result += "2";
+                    } else {
+                        result += "0";
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    void debug() {
+        String pos1;
+        String pos2;
+        String m = new StringBuilder(Long.toBinaryString(mask)).reverse().toString();
+        
+        // Strings must be reversed or it will be read from front to back
+        // instead of the intended back to front
+        if(moves%2==0) {
+            pos1 = new StringBuilder(Long.toBinaryString(current_position)).reverse().toString();
+            pos2 = new StringBuilder(Long.toBinaryString(current_position^mask)).reverse().toString();
+        } else {
+            pos1 = new StringBuilder(Long.toBinaryString(current_position^mask)).reverse().toString();
+            pos2 = new StringBuilder(Long.toBinaryString(current_position)).reverse().toString();
+        }
+        println("****************PRINTPOS******************");
+        println("Player1");
+        int index;
+        for(int i=0; i<WIDTH; i++){
+            for(int j=0; j<HEIGHT+1; j++){
+                index = j+i*WIDTH;
+                if(index<pos1.length() && pos1.charAt(index)=='1') {
+                    print("1");
+                } else {
+                    print("0");
+                }
+            }
+            println();
+        }
+        println("Player2");
+        for(int i=0; i<WIDTH; i++){
+            for(int j=0; j<HEIGHT+1; j++){
+                index = j+i*WIDTH;
+                if(index<pos2.length() && pos2.charAt(index)=='1') {
+                    print("1");
+                } else {
+                    print("0");
+                }
+            }
+            println();
+        }
+        println("MASK");
+        for(int i=0; i<WIDTH; i++){
+            for(int j=0; j<HEIGHT+1; j++){
+                index = j+i*WIDTH;
+                if(index<m.length() && m.charAt(index)=='1') {
+                    print("1");
+                } else {
+                    print("0");
+                }
+            }
+            println();
+        }
+        println();
     }
 }

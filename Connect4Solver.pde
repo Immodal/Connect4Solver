@@ -8,11 +8,21 @@ Board board;
 
 void setup() {
     size(600,600);
-    
     board = new Board(0, 0, width, height);
     position = new Position();
 }
 
 void draw() {
     board.draw(position);
+}
+
+void mousePressed() {
+    if(board.mouseIsOver()) {
+        int col = board.getMousedOverTile();
+        if(position.canPlay(col)) {
+            position.play(col);
+        }
+        //position.debug();
+    }
+    
 }

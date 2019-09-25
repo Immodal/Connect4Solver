@@ -2,8 +2,8 @@ import java.util.*;
 
 class Board {
     
-    int p1Color = #FF0000;
-    int p2Color = #0000FF;
+    final int P1CLR = #FF0000;
+    final int P2CLR = #0000FF;
     
     float x;
     float y;
@@ -19,34 +19,65 @@ class Board {
         this.dia = w/Position.WIDTH;
     }
     
-   void draw(Position pos) {
-       // P1 turn
-       if(pos.moves%2==0) {
-           drawTiles(pos.current_position, p1Color);
-           drawTiles(pos.current_position^pos.mask, p2Color);
-       } else {
-           drawTiles(pos.current_position, p2Color);
-           drawTiles(pos.current_position^pos.mask, p1Color);
-       }
+    void draw(Position pos) {
+        int winner = pos.getWinner();
+        if(winner==0) drawInput(pos);
+        else drawWinner(winner);
+        drawPos(pos);
+    }
+    
+    void drawPos(Position pos){
+        String str = pos.toPrintString();
+        
+        int index;
+        for(int i=0; i<Position.WIDTH; i++){
+            for(int j=0; j<Position.HEIGHT; j++){
+                index = j+i*(Position.WIDTH-1);
+                if(str.charAt(index)=='1') fill(P1CLR);
+                else if(str.charAt(index)=='2') fill(P2CLR);
+                else noFill();
+                
+                // Y Axis is flipped
+                ellipse(x+dia*(i+0.5), y+dia*(abs(Position.HEIGHT-j-1)+1.5), dia, dia);
+            }
+        }
+    }
+    
+   void drawInput(Position pos) {
+        fill(255);
+        stroke(0);
+        rect(this.x, this.y, this.w, this.dia);
+        int t = getMousedOverTile();
+        if(t>=0) {
+            if(pos.moves%2==0) {
+                fill(P1CLR);
+            } else {
+                fill(P2CLR);
+            }
+            ellipse(this.x+this.dia*(t+0.5), this.y+this.dia*(0.5), this.dia, this.dia);
+        }
+   }
+  
+  void drawWinner(int winner) {
+      String msg = "Player " + Integer.toString(winner) + " Wins!";
+      fill(0);
+      text(msg, this.x+this.w/2, this.y+this.dia/2);
+  }
+  
+  int getMousedOverTile(){
+      for(int i=0; i<Position.WIDTH; i++){
+          if(mouseX > this.x+this.dia*i && mouseX < this.x+this.dia*(i+1) && mouseY > this.y && mouseY < this.y+this.dia) {
+              return i;
+          }
+      }
+      return -1;
    }
    
-   void drawTiles(long pos, int pColor){
-       String state = Long.toBinaryString(pos);
-       
-       // Add leading 0s
-       char[] zeroes = new char[Position.WIDTH*(Position.HEIGHT+1) - state.length()];
-       Arrays.fill(zeroes, '0');
-       state = new String(zeroes) + state;
-       
-       for(int i=0; i<Position.WIDTH; i++){
-           for(int j=0; j<Position.HEIGHT; j++){
-               char s = state.charAt(i+j*Position.WIDTH);
-               if(s=='1'){
-                   fill(pColor);
-                   noStroke();
-                   ellipse(x+dia*(i+0.5), y+dia*(j+1.5), dia, dia);
-               }
-           }
+   boolean mouseIsOver() {
+       if (mouseX>x && mouseX<x+w && mouseY>y && mouseY<y+h) {
+           return true;
+       } else {
+           return false;
        }
    }
 }
